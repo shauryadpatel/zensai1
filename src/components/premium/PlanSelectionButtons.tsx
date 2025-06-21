@@ -12,6 +12,7 @@ import { PREMIUM } from '../../constants/uiStrings';
  * @param {function} onSubscribe - Function to handle subscription
  * @param {boolean} isLoading - Whether subscription is in progress
  * @param {boolean} isSubscribed - Whether user is already subscribed
+ * @param {boolean} [disabled=false] - Whether the subscribe button should be disabled
  * 
  * @example
  * return (
@@ -30,6 +31,7 @@ interface PlanSelectionButtonsProps {
   onSubscribe: () => void;
   isLoading: boolean;
   isSubscribed: boolean;
+  disabled?: boolean;
 }
 
 const PlanSelectionButtons = React.memo(function PlanSelectionButtons({
@@ -37,7 +39,8 @@ const PlanSelectionButtons = React.memo(function PlanSelectionButtons({
   onSelectPlan,
   onSubscribe,
   isLoading,
-  isSubscribed
+  isSubscribed,
+  disabled = false
 }: PlanSelectionButtonsProps) {
   const { MONTHLY, YEARLY, BUTTONS, PLAN_SELECTION, TRIAL_NOTE } = PREMIUM;
   
@@ -121,7 +124,7 @@ const PlanSelectionButtons = React.memo(function PlanSelectionButtons({
         {/* Subscribe Button */}
         <motion.button
           onClick={onSubscribe}
-          disabled={isLoading || isSubscribed}
+          disabled={isLoading || isSubscribed || disabled}
           className="w-full py-4 bg-gradient-to-r from-zen-mint-400 to-zen-mint-500 text-white font-bold rounded-2xl hover:from-zen-mint-500 hover:to-zen-mint-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3"
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
@@ -137,11 +140,17 @@ const PlanSelectionButtons = React.memo(function PlanSelectionButtons({
               <span>{BUTTONS.CURRENT_PLAN}</span>
             </>
           ) : (
+            disabled ? (
+            <>
+              <span>Missing Price Configuration</span>
+            </>
+            ) : (
             <>
               <Crown className="w-5 h-5" aria-hidden="true" />
               <span>{PLAN_SELECTION.CONTINUE_BUTTON}</span>
               <ArrowRight className="w-5 h-5 ml-1" aria-hidden="true" />
             </>
+            )
           )}
         </motion.button>
         
