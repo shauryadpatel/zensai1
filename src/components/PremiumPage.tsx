@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Crown, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext'; 
@@ -186,10 +187,13 @@ export default function PremiumPage({ onBack }: PremiumPageProps) {
           </div>
         </div>
       </motion.header>
-            onSubscribe={() => handleSubscribe(selectedPlan === 'monthly' ? priceIDs.monthly : priceIDs.yearly)}
+
+      {/* Main Content */}
+      <div className="relative z-10 container mx-auto max-w-6xl px-4 py-8">
+        {/* Current Subscription Status */}
+        {isSubscribed && (
           <CurrentSubscriptionCard
             isSubscribed={isSubscribed}
-            disabled={!canSubscribe}
             subscriptionTier={profile?.subscription_tier || 'free'}
             expiryDate={expiryDate}
           />
