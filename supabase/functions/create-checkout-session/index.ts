@@ -6,7 +6,7 @@ import Stripe from 'npm:stripe@13.2.0';
 const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-const APP_URL = Deno.env.get('APP_URL') || 'http://localhost:5173';
+const APP_URL = Deno.env.get('APP_URL') || 'http://localhost:5173'; // Default for local development
 
 // Price IDs for subscription plans
 const PRICE_IDS = {
@@ -200,7 +200,7 @@ Deno.serve(async (req: Request) => {
     // Create a checkout session
     try {
       const session = await stripe.checkout.sessions.create({
-        customer: customerId || undefined,
+        customer: customerId,
         payment_method_types: ['card'],
         line_items: [
           {
@@ -212,22 +212,23 @@ Deno.serve(async (req: Request) => {
         subscription_data: {
           trial_period_days: 7,
           metadata: {
-            userId,
+            userId: userId,
           },
         },
-        success_url: `${APP_URL}/home?subscription=success&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${APP_URL}/premium?subscription=canceled`,
+        success_url: `${APP_URL}/home?subscription=success&session_id={CHECKOUT_SESSION_ID}&t=${Date.now()}`,
+        cancel_url: `${APP_URL}/premium?subscription=canceled&t=${Date.now()}`,
         metadata: {
-          userId,
+          userId: userId,
         },
       });
 
       // Return the checkout session URL
-      console.log('Checkout session created successfully:', session.id);
+      console.log('Checkout session created successfully:', session.id, 'with URL:', session.url);
       return new Response(
         JSON.stringify({
           success: true,
           url: session.url,
+          session_id: session.id,
         }),
         {
           status: 200,
