@@ -38,7 +38,7 @@ export default function PremiumPage({ onBack }: PremiumPageProps) {
     setError('');
     
     try {
-      console.log('Creating checkout session for price ID:', priceId);
+      console.log('Creating checkout session for price ID:', priceId, 'with user ID:', user.id);
       
       // Call the Supabase Edge Function to create a checkout session
       const { data, error: functionError } = await supabase.functions.invoke('create-checkout-session', {
@@ -57,17 +57,21 @@ export default function PremiumPage({ onBack }: PremiumPageProps) {
       }
       
       if (!data.success || !data.url) {
-        console.error('Checkout session creation failed:', data.error);
+        console.error('Checkout session creation failed:', data, data.error);
         setError(data.error || 'Failed to create checkout session. Please try again.');
         return;
       }
       
-      console.log('Redirecting to Stripe checkout:', data.url);
+      console.log('Redirecting to Stripe checkout URL:', data.url);
       
       // Redirect to Stripe Checkout
-      window.location.href = data.url;
+      // Use a small timeout to ensure console logs are visible
+      setTimeout(() => {
+        console.log('Executing redirect now...');
+        window.location.href = data.url;
+      }, 100);
     } catch (err) {
-      console.error('Error subscribing:', err);
+      console.error('Error in subscription process:', err);
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(`Subscription error: ${errorMessage}`);
     } finally {
