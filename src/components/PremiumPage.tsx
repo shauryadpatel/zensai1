@@ -24,8 +24,23 @@ export default function PremiumPage({ onBack }: PremiumPageProps) {
   const { user } = useAuth();
   const { profile } = useJournal();
   const [isLoading, setIsLoading] = useState(false);
+  const [priceIDs, setPriceIDs] = useState({
+    monthly: '',
+    yearly: ''
+  });
   const [error, setError] = useState('');
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
+
+  // Load price IDs from environment variables
+  useEffect(() => {
+    console.log('VITE_STRIPE_PRICE_ID_MONTHLY:', import.meta.env.VITE_STRIPE_PRICE_ID_MONTHLY);
+    console.log('VITE_STRIPE_PRICE_ID_YEARLY:', import.meta.env.VITE_STRIPE_PRICE_ID_YEARLY);
+    
+    setPriceIDs({
+      monthly: import.meta.env.VITE_STRIPE_PRICE_ID_MONTHLY || '',
+      yearly: import.meta.env.VITE_STRIPE_PRICE_ID_YEARLY || ''
+    });
+  }, []);
 
   /**
    * Handles subscription process by creating a Stripe checkout session
@@ -33,6 +48,11 @@ export default function PremiumPage({ onBack }: PremiumPageProps) {
    */
   const handleSubscribe = useCallback(async (priceId: string) => {
     if (!user) return;
+    
+    if (!priceId) {
+      setError('Price ID is missing. Please check your environment configuration.');
+      return;
+    }
     
     setIsLoading(true);
     setError('');
@@ -81,6 +101,10 @@ export default function PremiumPage({ onBack }: PremiumPageProps) {
 
   const isSubscribed = profile?.subscription_status === 'premium';
   const isYearlySubscriber = profile?.subscription_tier === 'premium_plus';
+  
+  // Determine if we can enable the subscribe button
+  const canSubscribe = priceIDs.monthly && priceIDs.yearly;
+  
   const expiryDate = profile?.subscription_expires_at 
     ? new Date(profile.subscription_expires_at).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -162,13 +186,10 @@ export default function PremiumPage({ onBack }: PremiumPageProps) {
           </div>
         </div>
       </motion.header>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Current Subscription Status */}
-        {isSubscribed && (
+            onSubscribe={() => handleSubscribe(selectedPlan === 'monthly' ? priceIDs.monthly : priceIDs.yearly)}
           <CurrentSubscriptionCard
             isSubscribed={isSubscribed}
+            disabled={!canSubscribe}
             subscriptionTier={profile?.subscription_tier || 'free'}
             expiryDate={expiryDate}
           />
