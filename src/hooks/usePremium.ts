@@ -35,7 +35,8 @@ export function usePremium() {
   /**
    * Check if user has premium subscription
    */
-  const isPremium = profile?.subscription_status === 'premium';
+  const isPremium = profile?.subscription_status === 'premium' && 
+    (!profile?.subscription_expires_at || new Date(profile.subscription_expires_at) > new Date());
   
   /**
    * Check if user has premium plus (yearly) subscription

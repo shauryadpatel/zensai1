@@ -158,29 +158,49 @@ Deno.serve(async (req: Request) => {
 
     // Create a new customer if one doesn't exist
     if (!customerId) {
+      // Call the create-stripe-customer function to create a customer
       try {
-        const customer = await stripe.customers.create({
-          email,
-          name: name || email.split('@')[0],
-          metadata: {
-            userId,
-          },
+        const { data: customerData, error: customerError } = await supabase.functions.invoke('create-stripe-customer', {
+          body: { record: { id: userId, email, user_metadata: { name } } }
         });
         
-        customerId = customer.id;
-        
-        // Update the user's profile with the Stripe customer ID
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ revenuecat_user_id: customerId })
-          .eq('user_id', userId);
-        
-        if (updateError) {
-          console.error('Error updating user profile with Stripe customer ID:', updateError);
-          // Continue anyway, as the checkout can still work
+        if (customerError) {
+          console.error('Error calling create-stripe-customer function:', customerError);
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: 'Failed to create Stripe customer',
+            }),
+            {
+              status: 500,
+              headers: {
+                ...corsHeaders,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
         }
-      } catch (stripeError) {
-        console.error('Error creating Stripe customer:', stripeError);
+        
+        if (!customerData.success || !customerData.customerId) {
+          console.error('Failed to create Stripe customer:', customerData.error || 'Unknown error');
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: 'Failed to create Stripe customer',
+            }),
+            {
+              status: 500,
+              headers: {
+                ...corsHeaders,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+        }
+        
+        customerId = customerData.customerId;
+      } catch (err) {
+        console.error('Error creating Stripe customer:', err);
         return new Response(
           JSON.stringify({
             success: false,

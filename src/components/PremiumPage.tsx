@@ -59,7 +59,7 @@ export default function PremiumPage({ onBack }: PremiumPageProps) {
     setError('');
     
     try {
-      console.log('Creating checkout session for price ID:', priceId, 'with user ID:', user.id);
+      console.log('Creating checkout session for price ID:', priceId);
       
       // Call the Supabase Edge Function to create a checkout session
       const { data, error: functionError } = await supabase.functions.invoke('create-checkout-session', {
@@ -72,13 +72,13 @@ export default function PremiumPage({ onBack }: PremiumPageProps) {
       });
       
       if (functionError) {
-        console.error('Error creating checkout session:', functionError);
+        console.error('Error creating checkout session:', functionError.message);
         setError(`Failed to create checkout session: ${functionError.message || 'Unknown error'}`);
         return;
       }
       
       if (!data.success || !data.url) {
-        console.error('Checkout session creation failed:', data, data.error);
+        console.error('Checkout session creation failed:', data.error);
         setError(data.error || 'Failed to create checkout session. Please try again.');
         return;
       }
