@@ -441,6 +441,21 @@ export default function LandingPage() {
           </motion.div>
         </div>
       </section>
+      
+      {/* Bolt Badge */}
+      <a 
+        href="https://bolt.new/" 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="fixed bottom-4 right-4 z-50 transition-transform hover:scale-110"
+        aria-label="Powered by Bolt.new"
+      >
+        <img 
+          src="/black_Boltbadge_360x360.webp" 
+          alt="Powered by Bolt.new" 
+          className="w-16 h-16 md:w-20 md:h-20 object-contain"
+        />
+      </a>
     </div>
   );
 }

@@ -96,7 +96,7 @@ const PlanSelectionButtons = React.memo(function PlanSelectionButtons({
             whileTap={{ scale: 0.98 }}
           >
             {/* Popular tag */}
-            <div className="absolute top-0 right-0 bg-zen-peach-400 text-white text-xs font-bold px-3 py-1 transform translate-x-4 -translate-y-0 rotate-45">
+            <div className="absolute top-[20px] right-[-40px] bg-zen-peach-400 text-white text-xs font-bold px-3 py-1 transform rotate-45 w-36 text-center">
               BEST VALUE
             </div>
             
