@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Zap, Shield } from 'lucide-react';
+import { Sparkles, Zap, Shield, Volume2, BarChart3, BookOpen, EyeOff } from 'lucide-react';
 import { PREMIUM } from '../../constants/uiStrings';
 
 /**
@@ -14,8 +14,11 @@ const PremiumFeaturesSection = React.memo(function PremiumFeaturesSection() {
   const features = PREMIUM.FEATURES_SECTION.ITEMS;
   const iconMap = {
     'Personalized AI Insights': Sparkles,
-    'Unlimited Journal Features': Zap,
-    'VIP Support & Early Access': Shield
+    'Unlimited Journal Features': BookOpen,
+    'VIP Support & Early Access': Shield,
+    'Voice Affirmations': Volume2,
+    'Advanced Analytics': BarChart3,
+    'Ad-Free Experience': EyeOff
   };
 
   return (
