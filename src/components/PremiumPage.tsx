@@ -5,7 +5,7 @@ import { ArrowLeft, Crown, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext'; 
 import { useJournal } from '../hooks/useJournal';
 import { PREMIUM } from '../constants/uiStrings';
-import Purchases from 'purchases-web';
+import Purchases from '@revenuecat/purchases-js';
 import Logo from './Logo';
 
 // Import memoized components
