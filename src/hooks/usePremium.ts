@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useJournal } from './useJournal';
-import Purchases from '@revenuecat/purchases-js';
+import * as Purchases from '@revenuecat/purchases-js';
 import { safeStorage, ErrorCode, createAppError } from '../types/errors';
 
 /**
