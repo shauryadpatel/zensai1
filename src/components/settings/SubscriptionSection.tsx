@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Crown } from 'lucide-react';
 import { SETTINGS } from '../../constants/uiStrings';
 import { useNavigate } from 'react-router-dom';
+import { useStripe } from '../../hooks/useStripe';
 
 /**
  * SubscriptionSection - Displays the user's current subscription status and management options
@@ -33,6 +34,7 @@ const SubscriptionSection = React.memo(function SubscriptionSection({
   subscriptionExpiresAt
 }: SubscriptionSectionProps) {
   const navigate = useNavigate();
+  const { redirectToCustomerPortal, isLoading } = useStripe();
   
   const isPremium = subscriptionStatus === 'premium';
   const isYearlySubscriber = subscriptionTier === 'premium_plus';
@@ -43,6 +45,17 @@ const SubscriptionSection = React.memo(function SubscriptionSection({
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const handleManageSubscription = async () => {
+    if (isPremium) {
+      const portalUrl = await redirectToCustomerPortal();
+      if (portalUrl) {
+        window.location.href = portalUrl;
+      }
+    } else {
+      navigate('/premium');
+    }
   };
 
   return (
@@ -82,11 +95,19 @@ const SubscriptionSection = React.memo(function SubscriptionSection({
           )}
           
           <button
-            onClick={() => navigate('/premium')}
+            onClick={handleManageSubscription}
+            disabled={isLoading}
             className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-zen-mint-400 to-zen-mint-500 text-white rounded-xl hover:from-zen-mint-500 hover:to-zen-mint-600 transition-colors shadow-md"
           >
             <Crown className="w-4 h-4" aria-hidden="true" />
-            <span>{isPremium ? 'Manage Subscription' : 'Upgrade to Premium'}</span>
+            <span>
+              {isLoading 
+                ? 'Loading...' 
+                : isPremium 
+                  ? 'Manage Subscription' 
+                  : 'Upgrade to Premium'
+              }
+            </span>
           </button>
         </div>
       </div>

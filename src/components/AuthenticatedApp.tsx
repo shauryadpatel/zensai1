@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, Calendar, Heart, Sparkles, AlertCircle, CheckCircle, Trophy, Target, BarChart3, BookOpen, Lightbulb, RefreshCw, Save, Volume2, Settings } from 'lucide-react';
+import { LogOut, Calendar, Heart, Sparkles, AlertCircle, CheckCircle, Trophy, Target, BarChart3, BookOpen, Lightbulb, RefreshCw, Save, Volume2, Settings, Crown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useJournal } from '../hooks/useJournal';
 import { usePromptGenerator } from '../hooks/usePromptGenerator';
@@ -28,6 +28,7 @@ const LOTTIE_VARIANTS = ['greeting', 'journaling', 'typing', 'coding', 'music'];
 
 export default function AuthenticatedApp() {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const { 
     addEntry, 
     entries,
@@ -110,6 +111,21 @@ export default function AuthenticatedApp() {
   
   // Track previous badges to detect new ones
   const [previousBadges, setPreviousBadges] = useState<string[]>([]);
+
+  // Check for subscription activation success message
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const subscriptionActivated = query.get('subscription_activated');
+    
+    if (subscriptionActivated === 'true') {
+      showToast(
+        'Your premium subscription has been activated! Enjoy all the premium features.',
+        'success'
+      );
+      // Remove the query parameter
+      navigate('/home', { replace: true });
+    }
+  }, [location, navigate, showToast]);
 
   const streak = getStreak();
   const bestStreak = getBestStreak();

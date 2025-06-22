@@ -3,6 +3,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useStripe } from './hooks/useStripe';
 import Footer from '../components/Footer';
 
 // Lazy load components
@@ -14,6 +17,36 @@ const TermsPage = lazy(() => import('./pages/TermsPage'));
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { handleSubscriptionSuccess } = useStripe();
+  
+  // Handle subscription success redirect
+  useEffect(() => {
+    const handleStripeRedirect = async () => {
+      // Check if this is a redirect from Stripe checkout
+      const query = new URLSearchParams(location.search);
+      const subscriptionStatus = query.get('subscription');
+      const sessionId = query.get('session_id');
+      
+      if (subscriptionStatus === 'success' && sessionId && isAuthenticated) {
+        // Verify the subscription was successful
+        const success = await handleSubscriptionSuccess(sessionId);
+        
+        if (success) {
+          // Redirect to home with success message
+          navigate('/home?subscription_activated=true', { replace: true });
+        } else {
+          // Redirect to premium page with error
+          navigate('/premium?subscription_error=true', { replace: true });
+        }
+      }
+    };
+    
+    if (isAuthenticated && !isLoading) {
+      handleStripeRedirect();
+    }
+  }, [location, isAuthenticated, isLoading, handleSubscriptionSuccess, navigate]);
 
   if (isLoading) {
     return (
