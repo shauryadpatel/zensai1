@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import * as Purchases from '@revenuecat/purchases-js';
+import * as Purchases from 'purchases-web';
 import App from './App.tsx';
 import './index.css';
 
