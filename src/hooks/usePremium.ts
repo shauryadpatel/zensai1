@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { useJournal } from './useJournal';
-import * as Purchases from '@revenuecat/purchases-js';
 import { safeStorage, ErrorCode, createAppError } from '../types/errors';
 
 /**
@@ -71,21 +70,6 @@ export function usePremium() {
   }, []);
 
   /**
-   * Check RevenueCat subscription status
-   */
-  const checkSubscriptionStatus = useCallback(async () => {
-    if (!isPremium) return false;
-    
-    try {
-      const customerInfo = await Purchases.getCustomerInfo();
-      return customerInfo.entitlements.active['premium'] !== undefined;
-    } catch (err) {
-      console.error('Error checking RevenueCat subscription:', err);
-      return false;
-    }
-  }, [isPremium]);
-
-  /**
    * Check if a feature is available based on subscription status
    * 
    * @param {string} featureName - Name of the feature to check
@@ -140,7 +124,6 @@ export function usePremium() {
     isPremium,
     isPremiumPlus,
     subscriptionExpiresAt,
-    checkSubscriptionStatus,
     isUpsellModalOpen,
     upsellContent,
     showUpsellModal,

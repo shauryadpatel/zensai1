@@ -1,11 +1,11 @@
 import React, { useState, useCallback } from 'react';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Crown, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext'; 
 import { useJournal } from '../hooks/useJournal';
 import { PREMIUM } from '../constants/uiStrings';
-import * as Purchases from '@revenuecat/purchases-js';
+import { supabase } from '../lib/supabase';
 import Logo from './Logo';
 
 // Import memoized components
@@ -25,61 +25,33 @@ export default function PremiumPage({ onBack }: PremiumPageProps) {
   const { user } = useAuth();
   const { profile } = useJournal();
   const [isLoading, setIsLoading] = useState(false);
-  const [offerings, setOfferings] = useState<Purchases.Offerings | null>(null);
-  const [offeringsLoading, setOfferingsLoading] = useState(true);
-  const [offeringsError, setOfferingsError] = useState<string | null>(null);
+  const [priceIDs, setPriceIDs] = useState({
+    monthly: '',
+    yearly: ''
+  });
   const [error, setError] = useState('');
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
 
-  // Load offerings from RevenueCat
+  // Load price IDs from environment variables
   useEffect(() => {
-    const fetchOfferings = async () => {
-      if (!user) return;
-      
-      try {
-        setOfferingsLoading(true);
-        setOfferingsError(null);
-        
-        // Set the user ID for RevenueCat
-        await Purchases.logIn(user.id);
-        
-        // Fetch available offerings
-        const offeringsData = await Purchases.getOfferings();
-        console.log('RevenueCat offerings:', offeringsData);
-        
-        if (offeringsData && offeringsData.current) {
-          setOfferings(offeringsData);
-        } else {
-          setOfferingsError('No subscription offerings available');
-        }
-      } catch (err) {
-        console.error('Error fetching RevenueCat offerings:', err);
-        setOfferingsError('Failed to load subscription options');
-      } finally {
-        setOfferingsLoading(false);
-      }
-    };
+    console.log('VITE_STRIPE_PRICE_ID_MONTHLY:', import.meta.env.VITE_STRIPE_PRICE_ID_MONTHLY);
+    console.log('VITE_STRIPE_PRICE_ID_YEARLY:', import.meta.env.VITE_STRIPE_PRICE_ID_YEARLY);
     
-    if (user) {
-      fetchOfferings();
-    }
-    
-    return () => {
-      // Clean up RevenueCat user session when component unmounts
-      if (user) {
-        Purchases.logOut().catch(console.error);
-      }
-    };
-  }, [user]);
+    setPriceIDs({
+      monthly: import.meta.env.VITE_STRIPE_PRICE_ID_MONTHLY || '',
+      yearly: import.meta.env.VITE_STRIPE_PRICE_ID_YEARLY || ''
+    });
+  }, []);
 
   /**
-   * Handles subscription process by initiating a RevenueCat purchase
+   * Handles subscription process by creating a Stripe checkout session
+   * @param {string} priceId - The Stripe price ID for the selected plan
    */
-  const handleSubscribe = useCallback(async () => {
+  const handleSubscribe = useCallback(async (priceId: string) => {
     if (!user) return;
     
-    if (!offerings || !offerings.current) {
-      setError('Subscription offerings are not available');
+    if (!priceId) {
+      setError('Price ID is missing. Please check your environment configuration.');
       return;
     }
     
@@ -87,62 +59,52 @@ export default function PremiumPage({ onBack }: PremiumPageProps) {
     setError('');
     
     try {
-      // Get the package based on selected plan
-      const packageToPurchase = selectedPlan === 'monthly' 
-        ? offerings.current.monthly 
-        : offerings.current.annual;
+      console.log('Creating checkout session for price ID:', priceId, 'with user ID:', user.id);
       
-      if (!packageToPurchase) {
-        throw new Error(`${selectedPlan} package not available`);
+      // Call the Supabase Edge Function to create a checkout session
+      const { data, error: functionError } = await supabase.functions.invoke('create-checkout-session', {
+        body: {
+          priceId,
+          userId: user.id,
+          email: user.email,
+          name: user.name
+        }
+      });
+      
+      if (functionError) {
+        console.error('Error creating checkout session:', functionError);
+        setError(`Failed to create checkout session: ${functionError.message || 'Unknown error'}`);
+        return;
       }
       
-      console.log(`Purchasing ${selectedPlan} package:`, packageToPurchase);
+      if (!data.success || !data.url) {
+        console.error('Checkout session creation failed:', data, data.error);
+        setError(data.error || 'Failed to create checkout session. Please try again.');
+        return;
+      }
       
-      // Initiate the purchase
-      const purchaseResult = await Purchases.purchasePackage(packageToPurchase);
-      console.log('Purchase result:', purchaseResult);
+      console.log('Redirecting to Stripe checkout URL:', data.url);
       
-      // Show success message
-      alert('Subscription successful! Your premium features are now active.');
-      window.location.href = `${import.meta.env.VITE_APP_URL}/home?subscription=success`;
+      // Redirect to Stripe Checkout
+      // Use a small timeout to ensure console logs are visible
+      setTimeout(() => {
+        console.log('Executing redirect now...');
+        window.location.href = data.url;
+      }, 100);
     } catch (err) {
-      console.error('Error in RevenueCat purchase:', err);
-      
-      // Handle user cancellation separately
-      if (err instanceof Error && err.message.includes('cancelled')) {
-        setError('Purchase was cancelled');
-      } else {
-        const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
-        setError(`Subscription error: ${errorMessage}`);
-      }
+      console.error('Error in subscription process:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(`Subscription error: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
-  }, [user, offerings, selectedPlan]);
+  }, [user]);
 
   const isSubscribed = profile?.subscription_status === 'premium';
   const isYearlySubscriber = profile?.subscription_tier === 'premium_plus';
   
-  // Get package information from offerings
-  const packageInfo = useMemo(() => {
-    if (!offerings || !offerings.current) return null;
-    
-    const monthlyPackage = offerings.current.monthly;
-    const yearlyPackage = offerings.current.annual;
-    
-    if (!monthlyPackage || !yearlyPackage) return null;
-    
-    return {
-      monthly: {
-        price: monthlyPackage.product.priceString,
-        period: 'per month'
-      },
-      yearly: {
-        price: yearlyPackage.product.priceString,
-        period: 'per year'
-      }
-    };
-  }, [offerings]);
+  // Determine if we can enable the subscribe button
+  const canSubscribe = priceIDs.monthly && priceIDs.yearly;
   
   const expiryDate = profile?.subscription_expires_at 
     ? new Date(profile.subscription_expires_at).toLocaleDateString('en-US', {
@@ -263,10 +225,13 @@ export default function PremiumPage({ onBack }: PremiumPageProps) {
         <PlanSelectionButtons
           selectedPlan={selectedPlan}
           onSelectPlan={setSelectedPlan}
-          onSubscribe={handleSubscribe}
+          onSubscribe={() => handleSubscribe(
+            selectedPlan === 'monthly' 
+              ? import.meta.env.VITE_STRIPE_PRICE_ID_MONTHLY 
+              : import.meta.env.VITE_STRIPE_PRICE_ID_YEARLY
+          )}
           isLoading={isLoading}
           isSubscribed={isSubscribed}
-          disabled={offeringsLoading || !!offeringsError || !packageInfo}
         />
 
         {/* Features Section */}

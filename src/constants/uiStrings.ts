@@ -62,23 +62,15 @@ export const PREMIUM = {
     ITEMS: [
       {
         TITLE: 'Personalized AI Insights',
-        DESCRIPTION: 'Receive tailored mood analysis, personalized affirmations, and deep emotional pattern insights.'
-      },
-      {
-        TITLE: 'Voice Affirmations',
-        DESCRIPTION: 'Listen to your personalized affirmations with natural-sounding voice technology.'
-      },
-      {
-        TITLE: 'Advanced Analytics',
-        DESCRIPTION: 'Uncover patterns in your mood and journaling with detailed insights and visualizations.'
+        DESCRIPTION: 'Receive tailored mood analysis, personalized affirmations, and deep emotional pattern insights powered by advanced AI.'
       },
       {
         TITLE: 'Unlimited Journal Features',
-        DESCRIPTION: 'No limits on entries or photos to capture your complete journey.'
+        DESCRIPTION: 'Enjoy unlimited journal entries with photo attachments, complete history access, and voice-enabled affirmations.'
       },
       {
-        TITLE: 'Ad-Free Experience',
-        DESCRIPTION: 'Enjoy a clean, distraction-free environment for your mindfulness practice.'
+        TITLE: 'VIP Support & Early Access',
+        DESCRIPTION: 'Receive priority customer support and exclusive early access to all new features before they\'re released to everyone else.'
       }
     ]
   },
