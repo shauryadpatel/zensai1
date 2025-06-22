@@ -15,6 +15,7 @@ export default defineConfig({
   ],
   optimizeDeps: {
     exclude: ['lucide-react'],
+    include: ['purchases-web'],
   },
   build: {
     rollupOptions: {
