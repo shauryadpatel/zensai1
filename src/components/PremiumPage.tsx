@@ -267,6 +267,7 @@ export default function PremiumPage({ onBack }: PremiumPageProps) {
           isLoading={isLoading}
           isSubscribed={isSubscribed}
           disabled={offeringsLoading || !!offeringsError || !packageInfo}
+        />
 
         {/* Features Section */}
         <PremiumFeaturesSection />
