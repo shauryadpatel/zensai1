@@ -130,7 +130,7 @@ Deno.serve(async (req: Request) => {
     // Initialize Supabase client with service role key
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Check if user already has a Stripe customer ID
+    // Look up the user's profile to check for existing Stripe customer ID
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('revenuecat_user_id')
@@ -157,7 +157,21 @@ Deno.serve(async (req: Request) => {
     let customerId = profile?.revenuecat_user_id;
 
     // Create a new customer if one doesn't exist
-    if (!customerId) {
+    // Or if the existing customer ID is invalid
+    let customerExists = false;
+    
+    if (customerId) {
+      try {
+        // Verify the customer exists in Stripe
+        await stripe.customers.retrieve(customerId);
+        customerExists = true;
+      } catch (stripeError) {
+        console.log(`Customer ID ${customerId} not found in Stripe, will create a new one:`, stripeError);
+        customerExists = false;
+      }
+    }
+    
+    if (!customerExists) {
       try {
         const customer = await stripe.customers.create({
           email,
@@ -176,8 +190,12 @@ Deno.serve(async (req: Request) => {
           .eq('user_id', userId);
         
         if (updateError) {
-          console.error('Error updating user profile with Stripe customer ID:', updateError);
-          // Continue anyway, as the checkout can still work
+          console.error('Error updating profile with new Stripe customer ID:', updateError);
+          // We'll continue anyway since we have a valid customer ID now
+          console.log('Continuing with checkout using new customer ID:', customerId);
+        }
+        else {
+          console.log(`Successfully created and saved Stripe customer ID ${customerId} for user ${userId}`);
         }
       } catch (stripeError) {
         console.error('Error creating Stripe customer:', stripeError);
@@ -200,7 +218,7 @@ Deno.serve(async (req: Request) => {
     // Create a checkout session
     try {
       const session = await stripe.checkout.sessions.create({
-        customer: customerId,
+        customer: customerId, // Now we're sure this is a valid customer ID
         payment_method_types: ['card'],
         line_items: [
           {
@@ -223,7 +241,7 @@ Deno.serve(async (req: Request) => {
       });
 
       // Return the checkout session URL
-      console.log('Checkout session created successfully:', session.id, 'with URL:', session.url);
+      console.log('Checkout session created successfully for customer:', customerId, 'session ID:', session.id);
       return new Response(
         JSON.stringify({
           success: true,
