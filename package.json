@@ -22,8 +22,8 @@
     "@supabase/supabase-js": "^2.38.4",
     "@react-three/fiber": "^8.15.12",
     "@react-three/drei": "^9.92.7",
-    "three": "^0.159.0"
-   "@stripe/stripe-js": "^2.2.0"
+    "three": "^0.159.0",
+    "@stripe/stripe-js": "^2.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
